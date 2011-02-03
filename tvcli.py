@@ -11,6 +11,7 @@ Copyright (c) Adam tonks 2011
 import getopt, urllib, sys
 from xml.dom.minidom import parse, parseString
 
+
 def search(program):
     sock = urllib.urlopen("http://www.thetvdb.com/api/GetSeries.php?seriesname="+program)
     f = sock.read()
@@ -20,8 +21,21 @@ def search(program):
     if len(dom.getElementsByTagName('Series')) == 0:
         print "No episodes found with that name."
         return 1;
-
     
+    for series in dom.getElementsByTagName('Series'):
+        name = series.getElementsByTagName('SeriesName')
+        ID = series.getElementsByTagName('seriesid')
+        fa = series.getElementsByTagName('FirstAired')
+        overview = series.getElementsByTagName('Overview')
+
+        if len(name) < 0:
+            break
+
+        print "\n"+ID[0].childNodes[0].data+" - "+name[0].childNodes[0].data
+        if len(fa) > 0:
+            print "   First Aired:\t"+fa[0].childNodes[0].data
+        if len(overview) > 0:
+            print "   Overview:\t"+overview[0].childNodes[0].data[:60].rsplit(' ',1)[0]+"..."
 
 def main(argv):
 
