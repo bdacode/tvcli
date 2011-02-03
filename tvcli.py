@@ -8,7 +8,7 @@ This is the first project I've created in python, feedback is welcome.
 Copyright (c) Adam tonks 2011
 """
 
-import sys
+import sys, getopt
 
 def main(argv):
     if len(argv) == 1:
