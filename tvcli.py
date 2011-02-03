@@ -16,7 +16,7 @@ def main(argv):
         sys.exit(1)
 
     try:
-        opts, args = getopt.getopt(argv, ["s:","a:","td","tm","d:"], ["search","add","today","tomorrow","days"])
+        opts, args = getopt.getopt(argv, "s:a:d:tT", ["search=","add=","days=","today","tomorrow"])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -25,8 +25,7 @@ def usage():
     print "Usage: tvcli <action>"
     print "   -s,\t--search=PROGRAM\tSearch for a PROGRAM's ID in the TVDB."
     print "   -a,\t--add=ID\t\tAdd program ID to favourites list."
-    print "   -td,\t--today\t\t\tList programs airing today."
-    print "   -tm,\t--tomorrow\t\tList programs airing tomorrow."
     print "   -d,\t--days=NUM\t\tList programs airing in the next NUM days."
-
+    print "   -t,\t--today\t\t\tList programs airing today."
+    print "   -T,\t--tomorrow\t\tList programs airing tomorrow."
 main(sys.argv)
