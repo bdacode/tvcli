@@ -13,10 +13,27 @@ from xml.dom.minidom import parse, parseString
 
 APIKEY = 'AB4A43DCDF3A99B5'
 
+def updateAll():
+    shows = getData()
+    if not shows:
+        print "You have no favourite TV programs to update!"
+        return 1
+    for show in shows:
+        print "Updating episode list for "+show['SeriesName']+"..."
+        updateEpisodes(show['id'])
+
 def getData():
     if not os.path.isfile('data/favourites.pk'):
         return 0
-    f = open('data/favourites.pk','rb')
+    f = open('data/favourites.pk','r')
+    data = pickle.load(f)
+    f.close()
+    return data
+
+def getEpData(pID):
+    if not os.path.isfile('data/episodes/'+pID+'.pk'):
+        return 0
+    f = open('data/episodes/'+pID+'.pk','r')
     data = pickle.load(f)
     f.close()
     return data
@@ -68,6 +85,7 @@ def updateEpisodes(pID):
     episodes = []
 
     for episodeData in dom.getElementsByTagName('Episode'):
+        episode = {}
         for tag in episodeData.childNodes:
             if tag.nodeName != "#text" and tag.nodeValue !="\n":
                 if len(tag.childNodes) > 0:
@@ -118,13 +136,13 @@ def add(pID):
 
 def usage():
     print "Usage: tvcli <action>"
-    print "   -s,\t--search=PROGRAM\tSearch for PROGRAM's ID in the TVDB."
-    print "   -i,\t--info=PID\t\tRetrive info for program using PID (from --list)"
-    print "   -a,\t--add=ID\t\tAdd program ID to favourites list."
+    print "   -s,\t--search=PROGRAM\tSearch for a program's ID in the TvDB."
+    print "   -i,\t--info=PID\t\tRetrive info for program using ID (from --list)"
+    print "   -a,\t--add=TVDBID\t\tAdd program (identified by TvDB ID) to favourites list."
     print "   -d,\t--days=NUM\t\tList programs airing in the next NUM days."
     print "   -t,\t--today\t\t\tList programs airing today."
     print "   -T,\t--tomorrow\t\tList programs airing tomorrow."
-    print "   -u,\t--update\t\tUpdate cache."
+    print "   -u,\t--update\t\tUpdate episode lists."
     print "   -l,\t--list\t\t\tList the programs being tracked."
 
 def main(argv):
@@ -145,6 +163,8 @@ def main(argv):
             listProgs(getData())
         if o in ("-s", "--search"):
             search(a)
+        if o in ("-u", "--update"):
+            updateAll()
         if o in ("-a", "--add"):
             add(a)
 
