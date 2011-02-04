@@ -21,7 +21,7 @@ def getData():
 
 def listProgs(favs):
     for i in range(len(favs)):
-        print i+': '+favs[i]['name']
+        print `i+1`+': '+favs[i]['SeriesName']
     return 0
 
 def search(program):
