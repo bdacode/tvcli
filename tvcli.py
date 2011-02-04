@@ -5,12 +5,13 @@ tvcli
 This is a command line program to manage your favourite TV programs and output air times/program names.
 This is the first project I've created in python, feedback is welcome.
 
-Copyright (c) Adam tonks 2011
+Copyright (c) Adam Tonks 2011
 """
 
 import getopt, urllib, sys
 from xml.dom.minidom import parse, parseString
 
+APIKEY = 'AB4A43DCDF3A99B5'
 
 def search(program):
     sock = urllib.urlopen("http://www.thetvdb.com/api/GetSeries.php?seriesname="+program)
@@ -37,22 +38,10 @@ def search(program):
         if len(overview) > 0:
             print "   Overview:\t"+overview[0].childNodes[0].data[:60].rsplit(' ',1)[0]+"..."
 
-def main(argv):
+def add(pID):
 
-    if len(argv) == 0:
-        usage()
-        sys.exit(1)
+    f = open('tvcli.txt','a')
 
-    try:
-        opts, args = getopt.getopt(argv, "s:a:d:tT", ["search=","add=","days=","today","tomorrow"])
-
-    except getopt.GetoptError:
-        usage()
-        sys.exit(2) 
-
-    for o, a in opts:
-        if o in ("-s", "--search"):
-            search(a)
 
 def usage():
     print "Usage: tvcli <action>"
@@ -61,4 +50,28 @@ def usage():
     print "   -d,\t--days=NUM\t\tList programs airing in the next NUM days."
     print "   -t,\t--today\t\t\tList programs airing today."
     print "   -T,\t--tomorrow\t\tList programs airing tomorrow."
+    print "   -u,\t--update\t\tUpdate cache."
+    print "   -l,\t--list\t\t\tList the programs being tracked."
+
+def main(argv):
+
+    if len(argv) == 0:
+        usage()
+        sys.exit(1)
+
+    try:
+        opts, args = getopt.getopt(argv, "s:a:d:tTul", ["search=","add=","days=","today","tomorrow","update","list"])
+
+    except getopt.GetoptError:
+        usage()
+        sys.exit(2) 
+
+    for o, a in opts:
+        if o in ("-l", "--list"):
+            listProgs()
+        if o in ("-s", "--search"):
+            search(a)
+        if o in ("-a", "--add"):
+            add(a)
+
 main(sys.argv[1:])
