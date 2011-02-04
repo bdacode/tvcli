@@ -14,12 +14,17 @@ from xml.dom.minidom import parse, parseString
 APIKEY = 'AB4A43DCDF3A99B5'
 
 def getData():
+    if not os.path.isfile('data/favourites.pk'):
+        return 0
     f = open('tvcli.pk','rb')
     data = pickle.load(f)
     f.close()
     return data
 
 def listProgs(favs):
+    if not favs:
+        print "Your favourites list is empty :("
+        return 1
     for i in range(len(favs)):
         print `i+1`+': '+favs[i]['SeriesName']
     return 0
@@ -49,6 +54,30 @@ def search(program):
         if len(overview) > 0:
             print "   Overview:\t"+overview[0].childNodes[0].data[:60].rsplit(' ',1)[0]+"..."
 
+def updateEpisodes(pID):
+    url = "http://www.thetvdb.com/api/"+APIKEY+"/series/"+pID+"/all"
+    sock = urllib.urlopen(url)
+    if sock.getcode() == 200:
+        f = sock.read()
+    else:
+        return 1
+    sock.close()
+    dom = parseString(f)
+
+    episode = {}
+    episodes = []
+
+    for episode in dom.getElementsByTagName('Episode'):
+        for tag in episode.childNodes:
+            if tag.nodeName != "#text" and tag.nodeValue !="\n":
+                if len(tag.childNodex) > 0:
+                    episode[tag.nodeName] = tag.childNodes[0].data
+        episodes.append(episode)
+
+    f = open('data/episodes/'+pID+'.pk')
+    pickle.dump(episodes,f)
+    f.close
+
 def add(pID):
     url = "http://www.thetvdb.com/api/"+APIKEY+"/series/"+pID+"/all"
     sock = urllib.urlopen(url)
@@ -69,18 +98,19 @@ def add(pID):
                 if len(tag.childNodes) > 0:
                     prog[tag.nodeName] = tag.childNodes[0].data
     
-    if os.path.isfile('tvcli.pk'):
+    if os.path.isfile('data/favourites.pk'):
         current = getData()
-        progs = current.append(prog)
+        current.append(prog)
+        progs = current
     else:
         progs = [ prog ]
 
-    f = open('tvcli.pk','w')
+    f = open('data/favourites.pk','w')
     pickle.dump(progs,f)
     f.close()
 
     print "Added "+prog['SeriesName']+" to favourites."
-        
+ 
 
 def usage():
     print "Usage: tvcli <action>"
