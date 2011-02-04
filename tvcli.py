@@ -8,10 +8,21 @@ This is the first project I've created in python, feedback is welcome.
 Copyright (c) Adam Tonks 2011
 """
 
-import getopt, urllib, sys
+import getopt, os.path, pickle, urllib, sys
 from xml.dom.minidom import parse, parseString
 
 APIKEY = 'AB4A43DCDF3A99B5'
+
+def getData():
+    f = open('tvcli.pk','rb')
+    data = pickle.load(f)
+    f.close()
+    return data
+
+def listProgs(favs):
+    for i in range(len(favs)):
+        print i+': '+favs[i]['name']
+    return 0
 
 def search(program):
     sock = urllib.urlopen("http://www.thetvdb.com/api/GetSeries.php?seriesname="+program)
@@ -21,7 +32,7 @@ def search(program):
     
     if len(dom.getElementsByTagName('Series')) == 0:
         print "No episodes found with that name."
-        return 1;
+        return 1
     
     for series in dom.getElementsByTagName('Series'):
         name = series.getElementsByTagName('SeriesName')
@@ -39,13 +50,42 @@ def search(program):
             print "   Overview:\t"+overview[0].childNodes[0].data[:60].rsplit(' ',1)[0]+"..."
 
 def add(pID):
+    url = "http://www.thetvdb.com/api/"+APIKEY+"/series/"+pID+"/all"
+    sock = urllib.urlopen(url)
+    if sock.getcode() == 200:
+        f = sock.read()
+    else:
+        print "Error: Series not found or API key incorrect."
+        return 1
+    sock.close()
+    dom = parseString(f)
+    
+    prog = {}
+    progs = []
 
-    f = open('tvcli.txt','a')
+    for sInfo in dom.getElementsByTagName('Series'):
+        for tag in sInfo.childNodes:
+            if tag.nodeName != "#text" and tag.nodeValue != "\n":
+                if len(tag.childNodes) > 0:
+                    prog[tag.nodeName] = tag.childNodes[0].data
+    
+    if os.path.isfile('tvcli.pk'):
+        current = getData()
+        progs = current.append(prog)
+    else:
+        progs = [ prog ]
 
+    f = open('tvcli.pk','w')
+    pickle.dump(progs,f)
+    f.close()
+
+    print "Added "+prog['SeriesName']+" to favourites."
+        
 
 def usage():
     print "Usage: tvcli <action>"
-    print "   -s,\t--search=PROGRAM\tSearch for a PROGRAM's ID in the TVDB."
+    print "   -s,\t--search=PROGRAM\tSearch for PROGRAM's ID in the TVDB."
+    print "   -i,\t--info=PID\t\tRetrive info for program using PID (from --list)"
     print "   -a,\t--add=ID\t\tAdd program ID to favourites list."
     print "   -d,\t--days=NUM\t\tList programs airing in the next NUM days."
     print "   -t,\t--today\t\t\tList programs airing today."
@@ -60,7 +100,7 @@ def main(argv):
         sys.exit(1)
 
     try:
-        opts, args = getopt.getopt(argv, "s:a:d:tTul", ["search=","add=","days=","today","tomorrow","update","list"])
+        opts, args = getopt.getopt(argv, "s:i:a:d:tTul", ["search=","info=","add=","days=","today","tomorrow","update","list"])
 
     except getopt.GetoptError:
         usage()
@@ -68,7 +108,7 @@ def main(argv):
 
     for o, a in opts:
         if o in ("-l", "--list"):
-            listProgs()
+            listProgs(getData())
         if o in ("-s", "--search"):
             search(a)
         if o in ("-a", "--add"):
