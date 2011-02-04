@@ -16,7 +16,7 @@ APIKEY = 'AB4A43DCDF3A99B5'
 def getData():
     if not os.path.isfile('data/favourites.pk'):
         return 0
-    f = open('tvcli.pk','rb')
+    f = open('data/favourites.pk','rb')
     data = pickle.load(f)
     f.close()
     return data
@@ -67,18 +67,19 @@ def updateEpisodes(pID):
     episode = {}
     episodes = []
 
-    for episode in dom.getElementsByTagName('Episode'):
-        for tag in episode.childNodes:
+    for episodeData in dom.getElementsByTagName('Episode'):
+        for tag in episodeData.childNodes:
             if tag.nodeName != "#text" and tag.nodeValue !="\n":
-                if len(tag.childNodex) > 0:
+                if len(tag.childNodes) > 0:
                     episode[tag.nodeName] = tag.childNodes[0].data
         episodes.append(episode)
 
-    f = open('data/episodes/'+pID+'.pk')
+    f = open('data/episodes/'+pID+'.pk','w')
     pickle.dump(episodes,f)
     f.close
 
 def add(pID):
+    print "Searching for "+pID+" in the TVDB..."
     url = "http://www.thetvdb.com/api/"+APIKEY+"/series/"+pID+"/all"
     sock = urllib.urlopen(url)
     if sock.getcode() == 200:
@@ -110,6 +111,9 @@ def add(pID):
     f.close()
 
     print "Added "+prog['SeriesName']+" to favourites."
+    print "Updating episodes..."
+    updateEpisodes(pID)
+    print "Done"
  
 
 def usage():
