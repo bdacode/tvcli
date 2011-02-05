@@ -8,7 +8,8 @@ This is the first project I've created in python, feedback is welcome.
 Copyright (c) Adam Tonks 2011
 """
 
-import getopt, os.path, pickle, urllib, sys
+import copy, getopt, os.path, pickle, urllib, sys, time
+from datetime import date
 from xml.dom.minidom import parse, parseString
 
 APIKEY = 'AB4A43DCDF3A99B5'
@@ -45,6 +46,39 @@ def listProgs(favs):
     for i in range(len(favs)):
         print `i+1`+': '+favs[i]['SeriesName']
     return 0
+
+def getNextEp(pID):
+    episodes = getEpData(pID)
+    
+    d = date.today()
+
+    airDate = d.isoformat()
+    offset = -99999999
+    for episode in episodes:
+        if 'FirstAired' in episode:
+            o = int(airDate.replace('-','')) - int(episode['FirstAired'].replace('-',''))
+            if o < 0 and o > offset:
+                offset = o
+                airDate = episode['FirstAired']
+    return date.fromtimestamp(time.mktime(time.strptime(airDate,"%Y-%m-%d"))).strftime("%d %B %Y")
+
+def getLastEp(pID):
+    episodes = getEpData(pID)
+    
+    d = date.today()
+
+    now = d.isoformat()
+    for episode in episodes:
+        if 'FirstAired' in episode:
+            o = int(now.replace('-','')) - int(episode['FirstAired'].replace('-',''))
+            try:
+                offset
+            except NameError:
+                offset = o
+            if o > 0 and o < offset:
+                offset = o
+                airDate = episode['FirstAired']
+    return date.fromtimestamp(time.mktime(time.strptime(airDate,"%Y-%m-%d"))).strftime("%d %B %Y")
 
 def search(program):
     sock = urllib.urlopen("http://www.thetvdb.com/api/GetSeries.php?seriesname="+program)
@@ -85,12 +119,12 @@ def updateEpisodes(pID):
     episodes = []
 
     for episodeData in dom.getElementsByTagName('Episode'):
-        episode = {}
         for tag in episodeData.childNodes:
             if tag.nodeName != "#text" and tag.nodeValue !="\n":
                 if len(tag.childNodes) > 0:
                     episode[tag.nodeName] = tag.childNodes[0].data
-        episodes.append(episode)
+        episodes.append(episode.copy())
+        episode.clear()
 
     f = open('data/episodes/'+pID+'.pk','w')
     pickle.dump(episodes,f)
@@ -132,7 +166,22 @@ def add(pID):
     print "Updating episodes..."
     updateEpisodes(pID)
     print "Done"
- 
+
+def info(fID):
+    fID = int(fID)-1
+
+    d = getData()
+
+    if len(d) < fID:
+        print "Bad program ID. Please use the ID for the program given by the --list option."
+        sys.exit(1)
+
+    program = d[fID]
+
+    print `fID+1`+": "+program['SeriesName']
+    print "  Airs: "+program['Airs_DayOfWeek']+"s "+program['Airs_Time']+" (Network's local time)"
+    print "  Latest Episode: "+getLastEp(program['id'])
+    print "  Next Episode: "+getNextEp(program['id'])
 
 def usage():
     print "Usage: tvcli <action>"
@@ -167,5 +216,7 @@ def main(argv):
             updateAll()
         if o in ("-a", "--add"):
             add(a)
+        if o in ("-i", "--info"):
+            info(a)
 
 main(sys.argv[1:])
