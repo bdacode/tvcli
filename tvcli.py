@@ -9,7 +9,7 @@ Copyright (c) Adam Tonks 2011
 """
 
 import copy, getopt, os.path, pickle, urllib, sys, time
-from datetime import date
+from datetime import date, timedelta, datetime
 from xml.dom.minidom import parse, parseString
 from colorama import init, Fore, Back, Style
 init()
@@ -62,7 +62,88 @@ def getNextEp(pID):
             if o < 0 and o > offset:
                 offset = o
                 airDate = episode['FirstAired']
-    return date.fromtimestamp(time.mktime(time.strptime(airDate,"%Y-%m-%d"))).strftime("%d %B %Y")
+                epName = "["+episode['SeasonNumber']+"x"+episode['EpisodeNumber']+"] "+episode['EpisodeName']
+    try:
+        epName
+    except NameError:
+        epName = None
+
+    if epName == None:
+        return "No data available."
+    else:
+        return date.fromtimestamp(time.mktime(time.strptime(airDate,"%Y-%m-%d"))).strftime("%d %B %Y")+" - "+epName
+
+def showToday():
+    today = date.today().strftime("%d %B %Y")
+    d = getData()
+
+    programs = []
+
+    for i in range(len(d)):
+        p = d[i]
+        n = getNextEp(p['id'])
+        if n.find(today) > -1:
+            p['cid'] = i
+            programs.append(p)
+    
+    if len(programs)==0:
+        print "No programs airing today."
+        return 1
+    
+    print Fore.CYAN+Style.BRIGHT+"Airing Today:"+Style.RESET_ALL
+
+    for p in programs:
+        info(p['cid']+1)
+
+def showTomorrow():
+    t = date.today()+timedelta(days=2)
+    tomorrow = t.strftime("%d %B %Y")
+    d = getData()
+
+    programs = []
+
+    for i in range(len(d)):
+        p = d[i]
+        n = getNextEp(p['id'])
+        if n.find(tomorrow) > -1:
+            p['cid'] = i
+            programs.append(p)
+    
+    if len(programs)==0:
+        print "No programs airing tomorrow."
+        return 1
+    
+    print Fore.CYAN+Style.BRIGHT+"Airing Tomorrow:"+Style.RESET_ALL
+
+    for p in programs:
+        info(p['cid']+1)
+
+def showInDays(days):
+    td = date.today().isoformat()
+    d = getData()
+    
+    days = int(days)
+
+    progs = []
+
+    for i in range(len(d)):
+        p = d[i]
+        episodes = getEpData(p['id'])
+        for episode in episodes:
+            if 'FirstAired' in episode:
+                o = int(episode['FirstAired'].replace('-','')) - int(td.replace('-',''))
+                if o <= days and o > 0:
+                    p['cid'] = i
+                    progs.append(p)
+    if len(progs)==0:
+        print "No programs airing in the next "+`days`+" days."
+        return 1
+    
+    print Fore.CYAN+Style.BRIGHT+"Airing in the next "+`days`+" Days:"+Style.RESET_ALL
+
+    for p in progs:
+        info(p['cid']+1)
+
 
 def getLastEp(pID):
     episodes = getEpData(pID)
@@ -80,7 +161,15 @@ def getLastEp(pID):
             if o > 0 and o < offset:
                 offset = o
                 airDate = episode['FirstAired']
-    return date.fromtimestamp(time.mktime(time.strptime(airDate,"%Y-%m-%d"))).strftime("%d %B %Y")
+                epName = "["+episode['SeasonNumber']+"x"+episode['EpisodeNumber']+"] "+episode['EpisodeName']
+    try:
+        airDate
+    except NameError:
+        airDate = None
+    if airDate == None:
+        return "No data available."
+    else:
+        return date.fromtimestamp(time.mktime(time.strptime(airDate,"%Y-%m-%d"))).strftime("%d %B %Y")+" - "+epName
 
 def search(program):
     sock = urllib.urlopen("http://www.thetvdb.com/api/GetSeries.php?seriesname="+program)
@@ -261,7 +350,13 @@ def main(argv):
             add(a)
         if o in ("-i", "--info"):
             info(a)
-        if o in ("--delete"):
+        if o in ("-D", "--delete"):
             delete(a)
+        if o in ("-t", "--today"):
+            showToday()
+        if o in ("-T", "--tomorrow"):
+            showTomorrow()
+        if o in ("-d", "--days"):
+            showInDays(a)
 
 main(sys.argv[1:])
