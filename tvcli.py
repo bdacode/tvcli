@@ -281,6 +281,9 @@ def add(pID):
     
     prog = getSeriesData(pID)
 
+    if prog > 0:
+        return prog
+
     progs = []
     if os.path.isfile('data/favourites.pk'):
         current = getData()
