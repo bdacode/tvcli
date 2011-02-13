@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 tvcli
 
@@ -13,6 +13,8 @@ from datetime import date, timedelta, datetime
 from xml.dom.minidom import parse, parseString
 from colorama import init, Fore, Back, Style
 init()
+
+os.chdir(sys.path[0])
 
 APIKEY = 'AB4A43DCDF3A99B5'
 
@@ -59,13 +61,11 @@ def getNextEp(pID):
     for episode in episodes:
         if 'FirstAired' in episode:
             o = int(airDate.replace('-','')) - int(episode['FirstAired'].replace('-',''))
-            if o < 0 and o > offset:
+            if o < 1 and o > offset:
                 offset = o
                 airDate = episode['FirstAired']
                 epName = "["+episode['SeasonNumber']+"x"+episode['EpisodeNumber']+"] "+episode['EpisodeName']
-    try:
-        epName
-    except NameError:
+    if not 'epName' in locals():
         epName = None
 
     if epName == None:
@@ -96,7 +96,7 @@ def showToday():
         info(p['cid']+1)
 
 def showTomorrow():
-    t = date.today()+timedelta(days=2)
+    t = date.today()+timedelta(days=1)
     tomorrow = t.strftime("%d %B %Y")
     d = getData()
 
@@ -149,22 +149,18 @@ def getLastEp(pID):
     episodes = getEpData(pID)
     
     d = date.today()
-
+    offset = None
     now = d.isoformat()
     for episode in episodes:
         if 'FirstAired' in episode:
             o = int(now.replace('-','')) - int(episode['FirstAired'].replace('-',''))
-            try:
-                offset
-            except NameError:
+            if not offset:
                 offset = o
             if o > 0 and o < offset:
                 offset = o
                 airDate = episode['FirstAired']
                 epName = "["+episode['SeasonNumber']+"x"+episode['EpisodeNumber']+"] "+episode['EpisodeName']
-    try:
-        airDate
-    except NameError:
+    if not 'airDate' in locals():
         airDate = None
     if airDate == None:
         return "No data available."
@@ -262,7 +258,7 @@ def getSeriesData(pID):
         f = sock.read()
     else:
         print "Error: Series not found or API key incorrect."
-        return 1
+        return -1
     sock.close()
     dom = parseString(f)
     
@@ -280,8 +276,8 @@ def add(pID):
     print "Searching for "+pID+" in the TVDB..."
     
     prog = getSeriesData(pID)
-
-    if prog > 0:
+    
+    if prog < 0:
         return prog
 
     progs = []
