@@ -54,24 +54,74 @@ def listProgs(favs):
 def getNextEp(pID):
     episodes = getEpData(pID)
     
-    d = date.today()
+    now = datetime.now()
+    offset = None
+    at = None
 
-    airDate = d.isoformat()
-    offset = -99999999
     for episode in episodes:
         if 'FirstAired' in episode:
-            o = int(airDate.replace('-','')) - int(episode['FirstAired'].replace('-',''))
-            if o < 1 and o > offset:
-                offset = o
-                airDate = episode['FirstAired']
-                epName = "["+episode['SeasonNumber']+"x"+episode['EpisodeNumber']+"] "+episode['EpisodeName']
-    if not 'epName' in locals():
-        epName = None
-
-    if epName == None:
+            time = datetime.strptime(episode['FirstAired'],'%Y-%m-%d')
+            td = time - now
+            if td > timedelta(0) and (offset == None or td < (offset - now)):
+                offset = time
+                try:
+                    epName = "["+episode['SeasonNumber']+"x"+episode['EpisodeNumber']+"] "+episode['EpisodeName']
+                except KeyError:
+                    epName = "["+episode['SeasonNumber']+"x"+episode['EpisodeNumber']+"] Episode name unavailable."
+    if offset == None:
         return "No data available."
     else:
-        return date.fromtimestamp(time.mktime(time.strptime(airDate,"%Y-%m-%d"))).strftime("%d %B %Y")+" - "+epName
+        return offset.strftime("%d %B %Y")+" - "+epName
+
+def getLastEp(pID):
+    episodes = getEpData(pID)
+    
+    now = datetime.now()
+    offset = None
+    at = None
+
+    for episode in episodes:
+        if 'FirstAired' in episode:
+            time = datetime.strptime(episode['FirstAired'],'%Y-%m-%d')
+            td = now - time
+            if td > timedelta(0) and (offset == None or td > (offset - now)):
+                offset = time
+                try:
+                    epName = "["+episode['SeasonNumber']+"x"+episode['EpisodeNumber']+"] "+episode['EpisodeName']
+                except KeyError:
+                    epName = "["+episode['SeasonNumber']+"x"+episode['EpisodeNumber']+"] Episode name unavailable."
+    if offset == None:
+        return "No data available."
+    else:
+        return offset.strftime("%d %B %Y")+" - "+epName
+
+def showInDays(days):
+    now = datetime.now()
+    d = getData()
+    
+    days = int(days)
+
+    progs = []
+
+    for i in range(len(d)):
+        p = d[i]
+        episodes = getEpData(p['id'])
+        for episode in episodes:
+            if 'FirstAired' in episode:
+                time = datetime.strptime(episode['FirstAired'],'%Y-%m-%d')
+                td = time - now
+                if td > timedelta(0) and td < timedelta(days):
+                    p['cid'] = i
+                    progs.append(p)
+                
+    if len(progs)==0:
+        print "No programs airing in the next "+`days`+" days."
+        return 1
+    
+    print Fore.CYAN+Style.BRIGHT+"Airing in the next "+`days`+" Days:"+Style.RESET_ALL
+
+    for p in progs:
+        info(p['cid']+1)
 
 def showToday():
     today = date.today().strftime("%d %B %Y")
@@ -94,78 +144,6 @@ def showToday():
 
     for p in programs:
         info(p['cid']+1)
-
-def showTomorrow():
-    t = date.today()+timedelta(days=1)
-    tomorrow = t.strftime("%d %B %Y")
-    d = getData()
-
-    programs = []
-
-    for i in range(len(d)):
-        p = d[i]
-        n = getNextEp(p['id'])
-        if n.find(tomorrow) > -1:
-            p['cid'] = i
-            programs.append(p)
-    
-    if len(programs)==0:
-        print "No programs airing tomorrow."
-        return 1
-    
-    print Fore.CYAN+Style.BRIGHT+"Airing Tomorrow:"+Style.RESET_ALL
-
-    for p in programs:
-        info(p['cid']+1)
-
-def showInDays(days):
-    td = date.today().isoformat()
-    d = getData()
-    
-    days = int(days)
-
-    progs = []
-
-    for i in range(len(d)):
-        p = d[i]
-        episodes = getEpData(p['id'])
-        for episode in episodes:
-            if 'FirstAired' in episode:
-                o = int(episode['FirstAired'].replace('-','')) - int(td.replace('-',''))
-                if o <= days and o > 0:
-                    p['cid'] = i
-                    progs.append(p)
-    if len(progs)==0:
-        print "No programs airing in the next "+`days`+" days."
-        return 1
-    
-    print Fore.CYAN+Style.BRIGHT+"Airing in the next "+`days`+" Days:"+Style.RESET_ALL
-
-    for p in progs:
-        info(p['cid']+1)
-
-
-def getLastEp(pID):
-    episodes = getEpData(pID)
-    
-    d = date.today()
-    offset = None
-    now = d.isoformat()
-    for episode in episodes:
-        if 'FirstAired' in episode:
-            o = int(now.replace('-','')) - int(episode['FirstAired'].replace('-',''))
-            if not offset:
-                offset = o
-            if o > 0 and o < offset:
-                offset = o
-                airDate = episode['FirstAired']
-                epName = "["+episode['SeasonNumber']+"x"+episode['EpisodeNumber']+"] "+episode['EpisodeName']
-    if not 'airDate' in locals():
-        airDate = None
-    if airDate == None:
-        return "No data available."
-    else:
-        return date.fromtimestamp(time.mktime(time.strptime(airDate,"%Y-%m-%d"))).strftime("%d %B %Y")+" - "+epName
 
 def search(program):
     sock = urllib.urlopen("http://www.thetvdb.com/api/GetSeries.php?seriesname="+program)
@@ -354,7 +332,7 @@ def main(argv):
         if o in ("-t", "--today"):
             showToday()
         if o in ("-T", "--tomorrow"):
-            showTomorrow()
+            showInDays(1)
         if o in ("-d", "--days"):
             showInDays(a)
 
