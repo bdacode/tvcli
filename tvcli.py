@@ -61,7 +61,7 @@ def getNextEp(pID):
     for episode in episodes:
         if 'FirstAired' in episode:
             time = datetime.strptime(episode['FirstAired'],'%Y-%m-%d')
-            td = time - now
+            td = time - now + timedelta(1)
             if td > timedelta(0) and (offset == None or td < (offset - now)):
                 offset = time
                 try:
@@ -83,7 +83,7 @@ def getLastEp(pID):
     for episode in episodes:
         if 'FirstAired' in episode:
             time = datetime.strptime(episode['FirstAired'],'%Y-%m-%d')
-            td = now - time
+            td = now - time - timedelta(1)
             if td > timedelta(0) and (offset == None or td > (offset - now)):
                 offset = time
                 try:
