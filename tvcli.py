@@ -5,7 +5,21 @@ tvcli
 This is a command line program to manage your favourite TV programs and output air times/program names.
 This is the first project I've created in python, feedback is welcome.
 
-Copyright (c) Adam Tonks 2011
+Copyright (c) 2011 Adam Tonks
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 
 import copy, getopt, os.path, pickle, urllib, sys, time
@@ -146,7 +160,7 @@ def showToday():
         info(p['cid']+1)
 
 def search(program):
-    sock = urllib.urlopen("http://www.thetvdb.com/api/GetSeries.php?seriesname="+program)
+    sock = urllib.urlopen("http://cache.thetvdb.com/api/GetSeries.php?seriesname="+program)
     f = sock.read()
     sock.close()
     dom = parseString(f)
@@ -189,7 +203,7 @@ def search(program):
             print Style.BRIGHT+"   Status:\t"+Style.NORMAL+s['Status']
 
 def updateEpisodes(pID):
-    url = "http://www.thetvdb.com/api/"+APIKEY+"/series/"+pID+"/all"
+    url = "http://cache.thetvdb.com/api/"+APIKEY+"/series/"+pID+"/all/en.xml"
     sock = urllib.urlopen(url)
     if sock.getcode() == 200:
         f = sock.read()
@@ -230,7 +244,7 @@ def delete(pID):
     print "Deleted."
 
 def getSeriesData(pID):
-    url = "http://www.thetvdb.com/api/"+APIKEY+"/series/"+pID+"/all"
+    url = "http://cache.thetvdb.com/api/"+APIKEY+"/series/"+pID+"/all/"
     sock = urllib.urlopen(url)
     if sock.getcode() == 200:
         f = sock.read()
