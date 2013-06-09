@@ -12,7 +12,5 @@ The only required non-standard Python library is [colorama](http://pypi.python.o
 # License
 tvcli is open source software, licensed under the GNU General Public License Version 3.
 
-# Downloads/Links
-* [GitHub Project](https://github.com/retznto/tvcli)
-* [Download (.py)](https://raw.github.com/retznto/tvcli/master/tvcli.py)
-* [Reddit Thread](http://redd.it/ffufv)
+# Extra
+Background and other info might be found in the [Reddit Thread](http://redd.it/ffufv).
